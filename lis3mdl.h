@@ -48,18 +48,19 @@
 typedef struct {
   I2C_HandleTypeDef* i2c;
   uint8_t address;
+  uint16_t scale;
 } LIS3MDL;
 
-void LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address);
-void LIS3MDL_reset(LIS3MDL* lis3mdl);
-void LIS3MDL_enableTemperature(LIS3MDL* lis3mdl, bool enable);
-void LIS3MDL_setPerformance(LIS3MDL* lis3mdl, uint8_t performance);
-void LIS3MDL_setDateRate(LIS3MDL* lis3mdl, uint8_t dataRate);
-void LIS3MDL_setMode(LIS3MDL* lis3mdl, uint8_t mode);
-void LIS3MDL_setScale(LIS3MDL* lis3mdl, uint8_t scale);
-uint16_t LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis);
-uint16_t LIS3MDL_readTemperature(LIS3MDL* lis3mdl);
-uint8_t LIS3MDL_readDeviceId(LIS3MDL* lis3mdl);
-uint8_t LIS3MDL_readStatus(LIS3MDL* lis3mdl);
+HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address);
+HAL_StatusTypeDef LIS3MDL_reset(LIS3MDL* lis3mdl);
+HAL_StatusTypeDef LIS3MDL_enableTemperature(LIS3MDL* lis3mdl, bool enable);
+HAL_StatusTypeDef LIS3MDL_setPerformance(LIS3MDL* lis3mdl, uint8_t performance);
+HAL_StatusTypeDef LIS3MDL_setDateRate(LIS3MDL* lis3mdl, uint8_t dataRate);
+HAL_StatusTypeDef LIS3MDL_setMode(LIS3MDL* lis3mdl, uint8_t mode);
+HAL_StatusTypeDef LIS3MDL_setScale(LIS3MDL* lis3mdl, uint8_t scale);
+HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* value);
+HAL_StatusTypeDef LIS3MDL_readTemperature(LIS3MDL* lis3mdl, int16_t* value);
+HAL_StatusTypeDef LIS3MDL_readDeviceId(LIS3MDL* lis3mdl, uint8_t* deviceId);
+HAL_StatusTypeDef LIS3MDL_readStatus(LIS3MDL* lis3mdl, uint8_t* status);
 
 #endif
