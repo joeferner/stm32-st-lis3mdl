@@ -5,7 +5,8 @@
 #include <platform_config.h>
 #include <stdbool.h>
 
-#define LIS3MDL_ADDRESS1  0x1c
+#define LIS3MDL_ADDRESS1  (0b0011110 << 1)
+#define LIS3MDL_ADDRESS2  (0b0011100 << 1)
 
 #define LIS3MDL_PERFORMANCE_LOW_POWER  0b00
 #define LIS3MDL_PERFORMANCE_MEDIUM     0b01

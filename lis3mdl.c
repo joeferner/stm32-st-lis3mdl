@@ -2,6 +2,7 @@
 // based on Electric Imp drive https://github.com/electricimp/LIS3MDL/blob/master/LIS3MDL.class.nut
 
 #include "lis3mdl.h"
+#include <stdio.h>
 
 #define _LIS3MDL_REG_WHO_AM_I     0x0F
 #define _LIS3MDL_REG_CTL_1        0x20
@@ -78,6 +79,7 @@ HAL_StatusTypeDef LIS3MDL_setScale(LIS3MDL* lis3mdl, uint8_t scale) {
 }
 
 HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* value) {
+  HAL_StatusTypeDef status;
   uint8_t lowAddr, highAddr;
   switch (axis) {
   case LIS3MDL_AXIS_X:
@@ -95,7 +97,14 @@ HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* valu
   default:
     return 0;
   }
-  return _LIS3MDL_readRegister_int16(lis3mdl, lowAddr, highAddr, value);
+  status = _LIS3MDL_readRegister_int16(lis3mdl, lowAddr, highAddr, value);
+#ifdef DEBUG_LIS3MDL
+  if(status == HAL_OK) {
+    char axisCh = (axis == LIS3MDL_AXIS_X) ? 'x' : (axis == LIS3MDL_AXIS_Y ? 'y' : 'z');
+    printf("LIS3MDL: readAxis(%c) OK: %d\n", axisCh, *value);
+  }
+#endif
+  return status;
 }
 
 HAL_StatusTypeDef LIS3MDL_readTemperature(LIS3MDL* lis3mdl, int16_t* value) {
@@ -117,14 +126,14 @@ HAL_StatusTypeDef _LIS3MDL_init(LIS3MDL* lis3mdl) {
   status = LIS3MDL_readDeviceId(lis3mdl, &deviceId);
   if (status != HAL_OK) {
 #ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: readDeviceId status %d", status);
+    printf("LIS3MDL: readDeviceId status %d\n", status);
 #endif
     return status;
   }
 
   if (deviceId != LIS3MDL_DEVICE_ID) {
 #ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: invalid device id. expected 0x%02x, found: 0x%02x", LIS3MDL_DEVICE_ID, deviceId);
+    printf("LIS3MDL: invalid device id. expected 0x%02x, found: 0x%02x\n", LIS3MDL_DEVICE_ID, deviceId);
 #endif
     return HAL_ERROR;
   }
@@ -133,7 +142,7 @@ HAL_StatusTypeDef _LIS3MDL_init(LIS3MDL* lis3mdl) {
   status = _LIS3MDL_readRegister(lis3mdl, _LIS3MDL_REG_CTL_2, &reg2);
   if (status != HAL_OK) {
 #ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: read scale status %d", status);
+    printf("LIS3MDL: read scale status %d\n", status);
 #endif
     return status;
   }
@@ -156,31 +165,17 @@ HAL_StatusTypeDef _LIS3MDL_readRegister_int16(LIS3MDL* lis3mdl, uint8_t lowAddr,
     return status;
   }
 
-  uint32_t temp = (((uint32_t)high) << 8) | low;
-  if (temp & 0x8000) {
-    int16_t signedValue = (~temp + 1) & 0xffff;
-    *value = -1 * signedValue;
-  } else {
-    *value = temp;
-  }
+  *value = (((uint16_t)high) << 8) | (uint16_t)low;
   return HAL_OK;
 }
 
 HAL_StatusTypeDef _LIS3MDL_readRegister(LIS3MDL* lis3mdl, uint8_t reg, uint8_t* value) {
   HAL_StatusTypeDef status;
 
-  status = HAL_I2C_Master_Transmit(lis3mdl->i2c, lis3mdl->address, value, 1, 1000);
+  status = HAL_I2C_Mem_Read(lis3mdl->i2c, lis3mdl->address, reg, I2C_MEMADD_SIZE_8BIT, value, 1, 1000);
   if (status != HAL_OK) {
 #ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: tx error reg 0x%02x status %d", reg, status);
-#endif
-    return status;
-  }
-
-  status = HAL_I2C_Master_Receive(lis3mdl->i2c, lis3mdl->address, value, 1, 1000);
-  if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: tx/rx error reg 0x%02x status %d", reg, status);
+    printf("LIS3MDL: readRegister: mem read error reg 0x%02x status %d\n", reg, status);
 #endif
     return status;
   }
@@ -190,25 +185,25 @@ HAL_StatusTypeDef _LIS3MDL_readRegister(LIS3MDL* lis3mdl, uint8_t reg, uint8_t* 
 
 HAL_StatusTypeDef _LIS3MDL_writeRegister(LIS3MDL* lis3mdl, uint8_t reg, uint8_t data, uint8_t mask) {
   HAL_StatusTypeDef status;
-  uint8_t valuesToWrite[2];
+  uint8_t valueToWrite;
 
   if (mask == 0xff) {
-    valuesToWrite[1] = data;
+    valueToWrite = data;
   } else {
     uint8_t currentValue;
     status = _LIS3MDL_readRegister(lis3mdl, reg, &currentValue);
     if (status != HAL_OK) {
 #ifdef DEBUG_LIS3MDL
-      printf("LIS3MDL: rx current error reg 0x%02x status %d", reg, status);
+      printf("LIS3MDL: writeRegister: rx current error reg 0x%02x status %d\n", reg, status);
 #endif
     }
-    valuesToWrite[1] = (currentValue & ~mask) | (data & mask);
+    valueToWrite = (currentValue & ~mask) | (data & mask);
   }
 
-  status = HAL_I2C_Master_Transmit(lis3mdl->i2c, lis3mdl->address, valuesToWrite, 2, 1000);
+  status = HAL_I2C_Mem_Write(lis3mdl->i2c, lis3mdl->address, reg, I2C_MEMADD_SIZE_8BIT, &valueToWrite, 1, 1000);
   if (status != HAL_OK) {
 #ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: tx error reg 0x%02x status %d", reg, status);
+    printf("LIS3MDL: writeRegister: tx error reg 0x%02x status %d\n", reg, status);
 #endif
     return status;
   }
