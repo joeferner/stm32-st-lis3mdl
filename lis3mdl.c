@@ -4,6 +4,13 @@
 #include "lis3mdl.h"
 #include <stdio.h>
 
+#ifndef MIN
+#  define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#endif
+#ifndef MAX
+#  define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#endif
+
 #define _LIS3MDL_REG_WHO_AM_I     0x0F
 #define _LIS3MDL_REG_CTL_1        0x20
 #define _LIS3MDL_REG_CTL_2        0x21
@@ -33,6 +40,10 @@ HAL_StatusTypeDef _LIS3MDL_readRegister_int16(LIS3MDL* lis3mdl, uint8_t lowAddr,
 HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address) {
   lis3mdl->i2c = i2c;
   lis3mdl->address = address;
+  for(int i=0; i<3; i++) {
+    lis3mdl->min[i] = 32767;
+    lis3mdl->max[i] = -32768;
+  }
   return _LIS3MDL_init(lis3mdl);
 }
 
@@ -98,12 +109,14 @@ HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* valu
     return 0;
   }
   status = _LIS3MDL_readRegister_int16(lis3mdl, lowAddr, highAddr, value);
-#ifdef DEBUG_LIS3MDL
   if(status == HAL_OK) {
+#ifdef DEBUG_LIS3MDL
     char axisCh = (axis == LIS3MDL_AXIS_X) ? 'x' : (axis == LIS3MDL_AXIS_Y ? 'y' : 'z');
     printf("LIS3MDL: readAxis(%c) OK: %d\n", axisCh, *value);
-  }
 #endif
+    lis3mdl->max[axis] = MAX(lis3mdl->max[axis], *value);
+    lis3mdl->min[axis] = MIN(lis3mdl->min[axis], *value);
+  }
   return status;
 }
 

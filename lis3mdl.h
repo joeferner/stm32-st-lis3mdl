@@ -4,6 +4,7 @@
 
 #include <platform_config.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define LIS3MDL_ADDRESS1  (0b0011110 << 1)
 #define LIS3MDL_ADDRESS2  (0b0011100 << 1)
@@ -50,6 +51,8 @@ typedef struct {
   I2C_HandleTypeDef* i2c;
   uint8_t address;
   uint16_t scale;
+  int16_t min[3];
+  int16_t max[3];
 } LIS3MDL;
 
 HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address);
