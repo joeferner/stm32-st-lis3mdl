@@ -57,6 +57,8 @@ typedef struct {
 
 HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address);
 HAL_StatusTypeDef LIS3MDL_reset(LIS3MDL* lis3mdl);
+void LIS3MDL_clearMinMax(LIS3MDL* lis3mdl);
+void LIS3MDL_setMinMax(LIS3MDL* lis3mdl, uint8_t axis, int16_t min, int16_t max);
 HAL_StatusTypeDef LIS3MDL_enableTemperature(LIS3MDL* lis3mdl, bool enable);
 HAL_StatusTypeDef LIS3MDL_setPerformance(LIS3MDL* lis3mdl, uint8_t performance);
 HAL_StatusTypeDef LIS3MDL_setDateRate(LIS3MDL* lis3mdl, uint8_t dataRate);

@@ -40,11 +40,20 @@ HAL_StatusTypeDef _LIS3MDL_readRegister_int16(LIS3MDL* lis3mdl, uint8_t lowAddr,
 HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_t address) {
   lis3mdl->i2c = i2c;
   lis3mdl->address = address;
-  for(int i=0; i<3; i++) {
-    lis3mdl->min[i] = 32767;
-    lis3mdl->max[i] = -32768;
-  }
+  LIS3MDL_clearMinMax(lis3mdl);
   return _LIS3MDL_init(lis3mdl);
+}
+
+void LIS3MDL_clearMinMax(LIS3MDL* lis3mdl) {
+  for(int axis = 0; axis < 3; axis++) {
+    lis3mdl->min[axis] = 32767;
+    lis3mdl->max[axis] = -32768;
+  }
+}
+
+void LIS3MDL_setMinMax(LIS3MDL* lis3mdl, uint8_t axis, int16_t min, int16_t max) {
+  lis3mdl->min[axis] = min;
+  lis3mdl->max[axis] = -max;
 }
 
 HAL_StatusTypeDef LIS3MDL_reset(LIS3MDL* lis3mdl) {
