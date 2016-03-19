@@ -11,6 +11,12 @@
 #  define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #endif
 
+#ifdef DEBUG_LIS3MDL
+#define LIS3MDL_DEBUG_OUT(format, ...) printf("%s:%d: LIS3MDL: " format, __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define LIS3MDL_DEBUG_OUT(format, ...)
+#endif
+
 #define _LIS3MDL_REG_WHO_AM_I     0x0F
 #define _LIS3MDL_REG_CTL_1        0x20
 #define _LIS3MDL_REG_CTL_2        0x21
@@ -121,7 +127,7 @@ HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* valu
   if(status == HAL_OK) {
 #ifdef DEBUG_LIS3MDL
     char axisCh = (axis == LIS3MDL_AXIS_X) ? 'x' : (axis == LIS3MDL_AXIS_Y ? 'y' : 'z');
-    printf("LIS3MDL: readAxis(%c) OK: %d\n", axisCh, *value);
+    LIS3MDL_DEBUG_OUT("readAxis(%c) OK: %d\n", axisCh, *value);
 #endif
     lis3mdl->max[axis] = MAX(lis3mdl->max[axis], *value);
     lis3mdl->min[axis] = MIN(lis3mdl->min[axis], *value);
@@ -147,25 +153,19 @@ HAL_StatusTypeDef _LIS3MDL_init(LIS3MDL* lis3mdl) {
 
   status = LIS3MDL_readDeviceId(lis3mdl, &deviceId);
   if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: readDeviceId status %d\n", status);
-#endif
+    LIS3MDL_DEBUG_OUT("readDeviceId status %d\n", status);
     return status;
   }
 
   if (deviceId != LIS3MDL_DEVICE_ID) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: invalid device id. expected 0x%02x, found: 0x%02x\n", LIS3MDL_DEVICE_ID, deviceId);
-#endif
+    LIS3MDL_DEBUG_OUT("invalid device id. expected 0x%02x, found: 0x%02x\n", LIS3MDL_DEVICE_ID, deviceId);
     return HAL_ERROR;
   }
 
   uint8_t reg2;
   status = _LIS3MDL_readRegister(lis3mdl, _LIS3MDL_REG_CTL_2, &reg2);
   if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: read scale status %d\n", status);
-#endif
+    LIS3MDL_DEBUG_OUT("read scale status %d\n", status);
     return status;
   }
   lis3mdl->scale = _LIS3MDLGAUSS_TO_SCALE[(reg2 >> 5) & 0b11];
@@ -196,9 +196,7 @@ HAL_StatusTypeDef _LIS3MDL_readRegister(LIS3MDL* lis3mdl, uint8_t reg, uint8_t* 
 
   status = HAL_I2C_Mem_Read(lis3mdl->i2c, lis3mdl->address, reg, I2C_MEMADD_SIZE_8BIT, value, 1, 1000);
   if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: readRegister: mem read error reg 0x%02x status %d\n", reg, status);
-#endif
+    LIS3MDL_DEBUG_OUT("readRegister: mem read error reg 0x%02x status %d\n", reg, status);
     return status;
   }
 
@@ -215,18 +213,14 @@ HAL_StatusTypeDef _LIS3MDL_writeRegister(LIS3MDL* lis3mdl, uint8_t reg, uint8_t 
     uint8_t currentValue;
     status = _LIS3MDL_readRegister(lis3mdl, reg, &currentValue);
     if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-      printf("LIS3MDL: writeRegister: rx current error reg 0x%02x status %d\n", reg, status);
-#endif
+      LIS3MDL_DEBUG_OUT("writeRegister: rx current error reg 0x%02x status %d\n", reg, status);
     }
     valueToWrite = (currentValue & ~mask) | (data & mask);
   }
 
   status = HAL_I2C_Mem_Write(lis3mdl->i2c, lis3mdl->address, reg, I2C_MEMADD_SIZE_8BIT, &valueToWrite, 1, 1000);
   if (status != HAL_OK) {
-#ifdef DEBUG_LIS3MDL
-    printf("LIS3MDL: writeRegister: tx error reg 0x%02x status %d\n", reg, status);
-#endif
+    LIS3MDL_DEBUG_OUT("writeRegister: tx error reg 0x%02x status %d\n", reg, status);
     return status;
   }
 
