@@ -11,7 +11,7 @@
 #  define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #endif
 
-#ifdef DEBUG_LIS3MDL
+#ifdef LIS3MDL_DEBUG
 #define LIS3MDL_DEBUG_OUT(format, ...) printf("%s:%d: LIS3MDL: " format, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define LIS3MDL_DEBUG_OUT(format, ...)
@@ -125,7 +125,7 @@ HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* valu
   }
   status = _LIS3MDL_readRegister_int16(lis3mdl, lowAddr, highAddr, value);
   if(status == HAL_OK) {
-#ifdef DEBUG_LIS3MDL
+#ifdef LIS3MDL_DEBUG
     char axisCh = (axis == LIS3MDL_AXIS_X) ? 'x' : (axis == LIS3MDL_AXIS_Y ? 'y' : 'z');
     LIS3MDL_DEBUG_OUT("readAxis(%c) OK: %d\n", axisCh, *value);
 #endif
