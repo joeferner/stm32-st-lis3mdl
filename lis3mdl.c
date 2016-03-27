@@ -51,7 +51,7 @@ HAL_StatusTypeDef LIS3MDL_setup(LIS3MDL* lis3mdl, I2C_HandleTypeDef* i2c, uint8_
 }
 
 void LIS3MDL_clearMinMax(LIS3MDL* lis3mdl) {
-  for(int axis = 0; axis < 3; axis++) {
+  for (int axis = 0; axis < 3; axis++) {
     lis3mdl->min[axis] = 32767;
     lis3mdl->max[axis] = -32768;
   }
@@ -124,7 +124,7 @@ HAL_StatusTypeDef LIS3MDL_readAxis(LIS3MDL* lis3mdl, uint8_t axis, int16_t* valu
     return 0;
   }
   status = _LIS3MDL_readRegister_int16(lis3mdl, lowAddr, highAddr, value);
-  if(status == HAL_OK) {
+  if (status == HAL_OK) {
 #ifdef LIS3MDL_DEBUG
     char axisCh = (axis == LIS3MDL_AXIS_X) ? 'x' : (axis == LIS3MDL_AXIS_Y ? 'y' : 'z');
     LIS3MDL_DEBUG_OUT("readAxis(%c) OK: %d\n", axisCh, *value);
